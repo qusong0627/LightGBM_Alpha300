@@ -11,6 +11,8 @@
 > **数据本体托管在魔搭社区**：<https://www.modelscope.cn/datasets/qusong0627/LightGBM_Alpha300>
 > 本仓库**不含数据文件**（56 GB / 约 7.4 万个 Parquet）。仓库目录与数据目录一一对应，
 > 每个目录下的 `README.md` 说明该部分的数据布局、实测体积和字段口径。
+>
+> **更新口径：每周末同步一次。** 日线、衍生指标与因子库按交易日追加；财务数据按报告期披露更新（最新至 2026 年中报）；融资融券 T+1 披露。
 
 ---
 
@@ -127,12 +129,7 @@ path = snapshot_download(
 | 价格（open/high/low/close） | 元（人民币） | 精确到分/厘 |
 | 日线成交量（daily_*/features/L1/技术衍生） | 股 | volume 为股，三种复权量额相同 |
 | 日线成交额（daily_*/features/L1） | 万元 | amount 为万元 |
-| 分钟线（min1/min5）成交量 | 股 | volume 为股（已归一化） |
-| 分钟线（min1/min5）成交额 | 万元 | amount 为万元（已归一化） |
-| ETF 日线（etf_kline） | 股 / 万元 | volume 为股，amount 为万元（已归一化） |
 | 指数日线（index_daily） | 股 / 万元 | volume 为股，amount 为万元，均价=amount*1e4/volume |
-| Tick 累计成交量 / 盘口挂单量 | 股 | volume/askVol/bidVol/tickvol 为股（已归一化；历史 V1 分片由后端换算） |
-| Tick 累计成交额 | 万元 | amount 为万元（已归一化；历史 V1 分片由后端换算） |
 | 市值（total_mv / float_mv） | 元 | 市值 = 股本 × 收盘价 |
 | 股本（total_capital） | 股 | 总股本 / 流通股本 |
 | 财务报告数据 | 元 | 标准会计报表口径，除特别标注外 |
@@ -196,8 +193,6 @@ df = duckdb.sql("""
 > **本项目文档的口径原则：以数据实测为准。** 官网 `quantdb.cn/docs/fields.html` 与魔搭 README
 > 只要和真实 Parquet 冲突，一律按数据写，并在对应位置标注上游的错误（见各目录 README 的警告块），
 > 而不是照抄文档。上面的复权口径判定就是用 300 只标的逐一比对三套日线得出的。
-
-> 官网另描述了 `min1_kline` / `min5_kline` / `etf_kline` / Tick 分级行情等内容，**这些不在本魔搭数据集快照中**；本仓库的目录文档只写实际能下到的东西。
 
 ## 许可与引用
 

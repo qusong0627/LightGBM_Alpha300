@@ -51,10 +51,6 @@ modelscope download --repo-type dataset qusong0627/LightGBM_Alpha300 \
 | close | float | Close price (CNY) | 1510.00 |
 | volume | int | Volume (shares; identical across the three adjustment schemes) | 3200000 |
 | amount | float | Turnover value (10k CNY) | 48320.00 |
-| trade_date (source column `time`) | datetime | Trade time (YYYY-MM-DD HH:MM:SS) |  |
-| open / high / low / close | float | Minute-bar OHLC prices (CNY) |  |
-| volume | int | Minute-bar volume (shares, normalized) |  |
-| amount | float | Minute-bar turnover value (10k CNY, normalized) |  |
 | trade_date (source column `time`) | datetime | Trading date |  |
 | open / high / low / close | float | Index level OHLC |  |
 | volume | int | Volume (shares, normalized) |  |
@@ -64,7 +60,6 @@ modelscope download --repo-type dataset qusong0627/LightGBM_Alpha300 \
 
 > Upstream naming differs from the shipped files: the spec says `trade_date` / `IndexCode`,
 > **the Parquet actually uses `time` and `symbol`, and `index_daily` has no `IndexCode` column**.
-> Rows 8–11 (minute bars) describe `min1_kline` / `min5_kline`, which are **not in this snapshot**.
 
 Actual columns as shipped (measured):
 
@@ -75,8 +70,7 @@ symbol, time, open, high, low, close, volume, amount
 `index_daily` adds one more column, `Category` (broad-based / style / industry / theme).
 
 > **Naming and scope gaps vs the spec (data wins):** the spec writes `trade_date` where the files use `time`,
-> and lists an `IndexCode` column that `index_daily` does not have. The spec's minute-bar rows describe
-> `min1_kline` / `min5_kline`, which are **not in this snapshot**.
+> and lists an `IndexCode` column that `index_daily` does not have.
 
 ## Units
 

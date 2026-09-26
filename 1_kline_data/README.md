@@ -47,10 +47,6 @@ modelscope download --repo-type dataset qusong0627/LightGBM_Alpha300 \
 | close | float | 收盘价（元） | 1510.00 |
 | volume | int | 成交量（股，前/后/不复权三套相同） | 3200000 |
 | amount | float | 成交额（万元） | 48320.00 |
-| trade_date（原始列 time） | datetime | 交易时间（YYYY-MM-DD HH:MM:SS） |  |
-| open / high / low / close | float | 分钟开高低收价格（元） |  |
-| volume | int | 分钟成交量（股，已归一化） |  |
-| amount | float | 分钟成交额（万元，已归一化） |  |
 | trade_date（原始列 time） | datetime | 交易日 |  |
 | open / high / low / close | float | 指数点位开高低收 |  |
 | volume | int | 成交量（股，已归一化） |  |
@@ -60,7 +56,6 @@ modelscope download --repo-type dataset qusong0627/LightGBM_Alpha300 \
 
 > 上表摘自[官网字段规范](https://www.quantdb.cn/docs/fields.html)。注意两点差异：
 > 官网 K 线表用 `trade_date` 命名，**实际数据列名是 `time`**；官网 `Symbol` 在实际数据里是小写 `symbol`。
-> 官网还列了 `min1_kline` / `min5_kline` 分钟线字段，**本魔搭快照不含分钟线**。
 
 实际列清单（`daily_*`，实测）：
 

@@ -49,10 +49,6 @@ modelscope download --repo-type dataset qusong0627/LightGBM_Alpha300 \
 | bondValue | float | 纯债价值（元） |
 | expireYield | float | 到期收益率（YTM %） |
 | bondMaturityDate | date | 债券到期日 |
-| trade_date（原始列 time） | datetime | 交易日 |
-| open / high / low / close | float | 开高低收（元） |
-| volume | int | 成交量（股，已归一化） |
-| amount | float | 成交额（万元，已归一化） |
 
 > **实测坑**：抽样里 `bondValue`、`expireYield` 全为 `0.0`，`forceRedeemDate`、`putDate` 为 `NaT`。
 > 这几个字段在当前快照中**未填充**，不要直接用于策略过滤；用前请按列检查空值/零值率。
@@ -96,5 +92,5 @@ TrackIndex, Code, Name, NowPrice, PreClose, IOPV, Zgb, Sz
 ## 注意
 
 - 这三个文件都是**当期快照**，无历史版本，不能做跨期 ETF 成分回测。
-- 官网描述的 `etf_kline`（ETF 日 K 线）**不在本魔搭快照中**；ETF 行情请用 [`1_kline_data/`](../1_kline_data/README.md) 里对应的代码。
+- ETF 的日线行情按 ETF 代码在 [`1_kline_data/`](../1_kline_data/README.md) 中获取。
 - 字段名大小写混用（`EtfCode` 与 `etfCode`、`BondCode` 与 `bondCode` 成对出现），取值时注意别拿错列。

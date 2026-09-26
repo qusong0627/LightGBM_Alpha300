@@ -51,12 +51,7 @@ Upstream definitions, translated:
 | bondValue | float | Straight bond value (CNY) |
 | expireYield | float | Yield to maturity (YTM %) |
 | bondMaturityDate | date | Maturity date |
-| trade_date (source column `time`) | datetime | Trade date |
-| open / high / low / close | float | OHLC (CNY) |
-| volume | int | Volume (shares, normalized) |
-| amount | float | Turnover value (10k CNY, normalized) |
 
-> The last four rows describe `etf_kline`, which is **not in this snapshot**.
 > And in the shipped `bond_detail.parquet`, `bondValue` and `expireYield` are **all zero**,
 > while `forceRedeemDate` / `putDate` are `NaT` — the fields exist but are unpopulated.
 
@@ -104,7 +99,6 @@ index constituents. `Zgb` / `Sz` are native TDX-style size/share fields.
 ## Caveats
 
 - All three are **current snapshots** with no historical versions — no cross-period ETF constituent backtests.
-- The spec's `etf_kline` (ETF daily bars) is **not in this snapshot**; use the ETF codes against
-  [`1_kline_data/`](../1_kline_data/README.en.md) instead.
+- ETF price bars are available through [`1_kline_data/`](../1_kline_data/README.en.md), keyed by ETF code.
 - Column naming mixes cases (`EtfCode` vs `etfCode`, `BondCode` vs `bondCode` appear as pairs) —
   check you are reading the intended one.

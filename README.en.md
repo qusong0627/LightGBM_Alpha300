@@ -13,6 +13,9 @@ ready for multi-factor modelling and LightGBM training.
 > **The data itself lives on ModelScope**: <https://www.modelscope.cn/datasets/qusong0627/LightGBM_Alpha300>
 > This repository ships **no data files** (56 GB / ~74,000 Parquet files). Its directory layout mirrors the
 > data layout one-to-one; each directory's README documents that part's structure, measured size and field semantics.
+>
+> **Update cadence: synced at the end of each week.** Daily bars, derived indicators and factor tables append
+> per trading day; financial statements update on reporting-period disclosure; margin trading is disclosed T+1.
 
 Other languages: [中文](README.md)
 
@@ -134,18 +137,10 @@ Two implementation notes:
 | Price (open/high/low/close) | CNY | Precise to fen/li |
 | Daily volume (daily_* / features / L1 / technical) | shares | `volume` is in shares; identical across all three adjustment schemes |
 | Daily turnover value (daily_* / features / L1) | 10k CNY | `amount` is in units of 10,000 CNY |
-| Minute-bar volume (min1/min5) | shares | Normalized |
-| Minute-bar turnover value (min1/min5) | 10k CNY | Normalized |
-| ETF daily bars (etf_kline) | shares / 10k CNY | `volume` in shares, `amount` in 10k CNY (normalized) |
 | Index daily bars (index_daily) | shares / 10k CNY | `volume` in shares, `amount` in 10k CNY; average price = amount\*1e4/volume |
-| Tick cumulative volume / book quote volume | shares | `volume`/`askVol`/`bidVol`/`tickvol` in shares (normalized; legacy V1 shards converted server-side) |
-| Tick cumulative turnover value | 10k CNY | `amount` in 10k CNY (normalized; legacy V1 shards converted server-side) |
 | Market cap (total_mv / float_mv) | CNY | market cap = share capital × close |
 | Share capital (total_capital) | shares | Total / circulating share count |
 | Financial statement data | CNY | Standard accounting convention unless otherwise noted |
-
-> Rows mentioning `min1/min5`, `etf_kline` and Tick are part of the upstream product spec;
-> **this ModelScope snapshot contains none of them** (see the directory-level docs for what is actually shipped).
 
 ## Reading the data
 
@@ -215,9 +210,6 @@ Coverage, audited column by column:
 | `margin_trading` | — | 10 | spec lists `slo_sell_amount`, which does not exist; omits `finance_repay`/`slo_repay`/`slo_sell_volume`, which do |
 | `market_sentiment` | **0** | 17 | **the spec has no section at all** |
 | K-line | 10 | 8 | spec says `trade_date`/`IndexCode`; the data has `time`/`symbol` |
-
-> The spec also describes `min1_kline` / `min5_kline` / `etf_kline` / Tick data.
-> **None of those are in this ModelScope snapshot** — the directory docs describe only what you can download.
 
 ## Licence and citation
 
