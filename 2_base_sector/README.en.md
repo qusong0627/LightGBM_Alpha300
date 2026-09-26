@@ -62,7 +62,7 @@ Index identities confirmed by constituent count:
 The remaining columns include `Name`, `MainBusiness`, `rs_hyname` (industry), `tdx_dyname` (region),
 `IPO_Price`, `J_start` (listing date), `ZTPrice`/`DTPrice` (limit up/down), `DynaPE`/`PB_MRQ`/`StaticPE_TTM`,
 `EverZTCount`/`YearZTDay` (limit-up counts), `StaffNum`, `ReportDate` and more.
-**They are largely native TDX-style names; the upstream spec documents roughly 8 of the 152.**
+**They are largely native TDX-style names — read the actual Parquet column list before using them.**
 
 ### `sector_concept/sector_members.parquet`
 
@@ -86,7 +86,7 @@ The string form aligns directly with partition directory names like `dt=20260924
 ### `margin_trading/` — margin trading and securities lending
 
 Day-partitioned, 2607 partitions, disclosed T+1, latest `dt=20260923` (**one day behind the quote tables**).
-Measured 10 columns:
+The latest partition has 3,869 rows, 341 of them Beijing Stock Exchange `.BJ` symbols; 10 columns:
 
 ```
 symbol, time, finance_balance, slo_volume, finance_buy, slo_sell_volume,
@@ -105,9 +105,10 @@ finance_net      = finance_buy - finance_repay
 slo_sell_volume  = slo_net + slo_repay
 ```
 
-## Where the spec disagrees with the data (data wins)
+## Field definitions (excerpt)
 
-Upstream field list, translated:
+Field definitions, translated from the spec page and kept verbatim; **these names do not all match the
+shipped files (which are always lowercase) — trust the measured column lists in the sections above**:
 
 <!-- base_en: 21 行 | 译自 quantdb.cn §3 基础数据与索引 -->
 | Field | Type | Description |
@@ -134,20 +135,9 @@ Upstream field list, translated:
 | finance_net | float | Net financing buy |
 | slo_net | float | Net securities-lending sell |
 
-> The upstream `base` section mixes three different datasets into one list
-> (instrument master / sector constituents / margin trading).
-> **Verified against the data:** `slo_sell_amount` does not exist, while `finance_repay`,
-> `slo_repay` and `slo_sell_volume` do but are undocumented here; `Symbol`/`trade_date`
-> are lowercase `symbol`/`time` in `margin_trading`.
+> The table above groups instrument-master fields together with sector-constituent fields; in the data
+> they live in two separate files (`instrument_detail` and `sector_concept`).
 
-Measured discrepancies:
-
-- The spec lists `slo_sell_amount`; **it does not exist** in the data. Conversely `finance_repay`,
-  `slo_repay` and `slo_sell_volume` exist but are undocumented here.
-- The spec writes `Symbol` / `trade_date`; `margin_trading` uses lowercase `symbol` / `time`.
-- The spec mixes instrument master fields (`Name`/`ListDate`/`Province`/`EstablishDate`/`ActiveCapital`/
-  `SecurityType`/`BelongRZRQ`/`J_zgb`) and sector constituent fields (`SectorCode`/`SectorName`/`SectorType`)
-  in **one** list, but they live in two separate files here.
 - Sector names in `sector_members.parquet` are Chinese only — there is no English alias column.
 
 ## Download

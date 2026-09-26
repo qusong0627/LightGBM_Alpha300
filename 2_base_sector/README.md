@@ -59,7 +59,7 @@
 其余 152 列还包含 `Name`、`MainBusiness`（主营）、`rs_hyname`（行业名）、`tdx_dyname`（地域名）、
 `IPO_Price`、`J_start`（上市日期）、`ZTPrice`/`DTPrice`（涨/跌停价）、`DynaPE`/`PB_MRQ`/`StaticPE_TTM`（估值）、
 `EverZTCount`/`YearZTDay`（涨停统计）、`StaffNum`（员工数）、`ReportDate`（最近报告期）等。
-**字段名基本是通达信风格的原生命名，官网字段文档只覆盖了其中约 8 个。**
+**字段名基本是通达信风格的原生命名，读表时以 Parquet 实际列名为准。**
 
 ### `sector_concept/sector_members.parquet`
 
@@ -81,7 +81,7 @@
 
 ### `margin_trading/` — 融资融券
 
-按日分区，2607 个分区，T+1 披露，最新到 `dt=20260923`（**比日线晚一个交易日**）。实测 10 列：
+按日分区，2607 个分区，T+1 披露，最新到 `dt=20260923`（**比日线晚一个交易日**）。最新分区实测 3869 行，含 341 只北交所 `.BJ`；共 10 列：
 
 ```
 symbol, time, finance_balance, slo_volume, finance_buy, slo_sell_volume,
@@ -100,9 +100,10 @@ finance_net      = finance_buy - finance_repay
 slo_sell_volume  = slo_net + slo_repay
 ```
 
-## 与官网字段文档的差异（实测）
+## 字段摘录
 
-字段规范见 <https://www.quantdb.cn/docs/fields.html>，官网 `base` 段摘录如下：
+字段定义摘自 <https://www.quantdb.cn/docs/fields.html> 的基础数据段，按原文照录；
+**下表列名与实际 Parquet 不完全一致（实际一律小写），以本目录上文各节的实测清单为准**：
 
 <!-- base: 21 行 -->
 | 字段名称 | 数据类型 | 字段说明 |
@@ -129,13 +130,10 @@ slo_sell_volume  = slo_net + slo_repay
 | finance_net | float | 融资净买入 |
 | slo_net | float | 融券净卖出 |
 
-对照实际数据：
-
-- 官网列了 `slo_sell_amount`，**实际数据没有这一列**；反过来实际有的 `finance_repay`、`slo_repay`、`slo_sell_volume` 官网未单列。
-- 官网写 `Symbol` / `trade_date`，实际 `margin_trading` 里是小写 `symbol` / `time`。
-- 官网把合约资料（`Name`/`ListDate`/`Province`/`EstablishDate`/`ActiveCapital`/`SecurityType`/`BelongRZRQ`/`J_zgb`）
-  和板块成分（`SectorCode`/`SectorName`/`SectorType`）**写在同一张表里描述**，实际它们分属
-  `instrument_detail` 与 `sector_concept` 两个不同文件。
+上面这张摘录表把合约资料字段（`Name` / `ListDate` / `Province` / `EstablishDate` / `ActiveCapital` /
+`SecurityType` / `BelongRZRQ` / `J_zgb`）与板块成分字段（`SectorCode` / `SectorName` / `SectorType`）
+放在了一起，实际它们分属 `instrument_detail` 与 `sector_concept` 两个文件；
+`margin_trading` 的列已在上一节实测列出。
 
 ## 下载
 

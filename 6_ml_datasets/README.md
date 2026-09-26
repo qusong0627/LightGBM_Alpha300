@@ -1,7 +1,7 @@
 # `6_ml_datasets/` — 机器学习数据集（300+ 因子）
 
-本目录是**建模主表**：四张按交易日分区的宽表，每个分区是当日全市场截面（约 5200 行）。
-L1/L2 因子共 321 个，官网对每一个都给了中文标签与口径说明——本目录文档已完整摘录。
+本目录是**建模主表**：四张按交易日分区的宽表，每个分区是当日的**沪深两市**截面（5196~5223 行，**不含北交所 `.BJ`**，与日线/衍生表 5570 行的口径不同）。
+L1/L2 因子共 321 个，每一个都有中文标签与口径说明，本目录文档已完整摘录（并与实际列逐一核对）。
 
 ```
 6_ml_datasets/
@@ -20,7 +20,7 @@ L1/L2 因子共 321 个，官网对每一个都给了中文标签与口径说明
 | `l2_factors` | 219 | 2120 | 9.92 MB | ~2.42 GB | ~21 GB |
 | `l1_l2_factors` | 329 | 2120 | 14.39 MB | ~3.51 GB | ~30.5 GB |
 
-单日截面行数：`l1_factors` 5208 行，`l1_l2_factors` 5196 行（2026-09-24 实测，内连接后略少）。
+单日截面行数（2026-09-24 实测）：`features_daily` 5223 行、`l1_factors` 5208 行、`l2_factors` 5210 行、`l1_l2_factors` 5196 行（内连接后略少）。四张表都不含北交所标的，而日线/衍生表含 347 只 `.BJ`——以因子表为左表做内连接，口径自然一致。
 
 ## 该下哪一张
 
@@ -90,12 +90,12 @@ zt_price, dt_price, hs_turnover, seal_strength, zaf, beta_now, dyna_pe, static_p
 div_yield, pb_mrq, ever_zt_count, year_zt_days
 ```
 
-官方口径摘录（**注意命名差异，见下方警告**）：
+口径摘录：
 
 <!-- factors_features: 45 行 -->
 | 字段名称 | 中文标签 | 口径说明 |
 |---|---|---|
-| time / Symbol | 交易日 / 股票代码 | 行索引， {6位数字}.{SH/SZ/BJ} |
+| symbol / date / time | 交易日 / 股票代码 | 行索引，`{6位数字}.{SH/SZ}`（因子表不含 `.BJ`） |
 | close | 收盘价(元，后复权) | 后复权收盘，全部技术指标的基准序列 |
 | ma5 | MA5 | 后复权收盘 N 日简单均线 |
 | ma10 | MA10 |  |
@@ -141,14 +141,12 @@ div_yield, pb_mrq, ever_zt_count, year_zt_days
 | ps_ttm | PS(TTM) | total_mv / revenue_ttm |
 | dividend_rate | 股息率 | 近 12 个月每股累计分红 / 收盘价 |
 
-> ⚠️ **官网文档与实际数据不一致（实测）**：
-> - 官网把标签写成 `return_1d` ~ `return_60d`，**实际列名是 `future_return_1d` ~ `future_return_60d`**。
-> - 官网写 `Symbol`，实际是小写 `symbol`。
-> - 官网只记了 48 个字段，实际 78 列——**37 列未记录**，主要是标的属性列
->   （`industry_code/name`、`region_area_code/name`、`main_business`、`list_date`、`is_st`、`is_hsgt`、`is_margin`、
->   `in_hs300`、`is_kcb_creatable`、`is_quit_risk`、`is_hk`）和通达信风格的行情衍生列
->   （`zt_price`、`dt_price`、`seal_strength`、`hs_turnover`、`zaf`、`beta_now`、`dyna_pe`、`static_pe_ttm`、
->   `div_yield`、`pb_mrq`、`ever_zt_count`、`year_zt_days`、`total_cap_yi`、`float_mv_yi`、`free_float_shares`、`ipo_price`）。
+> ⚠️ **本表 78 列（实测）**：主键是小写 `symbol` + `time`；未来 N 日收益标签列名带前缀，
+> 是 `future_return_1d` ~ `future_return_60d`；除行情、技术、估值列外，另有 30 列标的属性与
+> 通达信风格衍生列：`industry_code`/`industry_name`/`sector_code`/`region_area_code`/`region_area_name`/
+> `main_business`/`list_date`/`is_st`/`is_hk`/`is_hsgt`/`is_margin`/`in_hs300`/`is_kcb_creatable`/`is_quit_risk`
+> 与 `zt_price`/`dt_price`/`seal_strength`/`hs_turnover`/`zaf`/`beta_now`/`dyna_pe`/`static_pe_ttm`/
+> `div_yield`/`pb_mrq`/`ever_zt_count`/`year_zt_days`/`total_cap_yi`/`float_mv_yi`/`free_float_shares`/`ipo_price`。
 
 > **⚠️ `future_return_*` 是标签，不是特征。** 6 个未来 N 日收益列和特征同表，
 > 自动生成特征列表（「除主键外全部」）会直接标签泄漏。
@@ -172,7 +170,7 @@ div_yield, pb_mrq, ever_zt_count, year_zt_days
 | `style_*` | 5 | 风格 |
 | `mfi_*` + `obv_*` | 2 | 经典资金流 |
 
-### 110 个 L1 因子完整口径（摘自官网，与实际列逐一核对：110/110 全部对得上）
+### 110 个 L1 因子完整口径（与实际列逐一核对：110/110 全部对得上）
 
 <!-- factors_l1: 110 行 -->
 | 字段名称 | 中文标签 | 口径说明 |

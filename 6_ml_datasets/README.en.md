@@ -1,7 +1,8 @@
 # `6_ml_datasets/` — Machine-Learning Datasets (300+ Factors)
 
-The **modelling core**: four day-partitioned wide tables, one full-market cross-section per day
-(~5,200 rows). 321 L1+L2 factors in total, each with a published definition — reproduced in full below,
+The **modelling core**: four day-partitioned wide tables, one SSE+SZSE cross-section per day
+(5,196–5,223 rows, **no Beijing Stock Exchange `.BJ`** — unlike the 5,570-row daily and derived tables).
+321 L1+L2 factors in total, each with a published definition — reproduced in full below,
 translated, and verified column by column against the data.
 
 ```
@@ -23,7 +24,9 @@ Layout: [中文](README.md) · [back to top](../README.en.md)
 | `l2_factors` | 219 | 2120 | 9.92 MB | ~2.42 GB | ~21 GB |
 | `l1_l2_factors` | 329 | 2120 | 14.39 MB | ~3.51 GB | ~30.5 GB |
 
-Measured on 2026-09-24: `l1_factors` 5,208 rows, `l1_l2_factors` 5,196 rows (slightly fewer after the inner join).
+Measured on 2026-09-24: `features_daily` 5,223 rows, `l1_factors` 5,208, `l2_factors` 5,210,
+`l1_l2_factors` 5,196 (slightly fewer after the inner join). None of the four carry `.BJ` symbols,
+while the daily and derived tables include 347 of them — keep a factor table as the left side of the join.
 
 ## Which table do you need
 
@@ -95,7 +98,7 @@ div_yield, pb_mrq, ever_zt_count, year_zt_days
 <!-- factors_features_en: 45 行 | 译自 quantdb.cn §8.1 features_daily -->
 | Field | Label | Definition |
 |---|---|---|
-| time / Symbol | Trading date / stock code | Row index; `{6 digits}.{SH/SZ/BJ}` |
+| symbol / date / time | Trading date / stock code | Row index; `{6 digits}.{SH/SZ}` (no `.BJ` in the factor tables) |
 | close | Close (CNY, backward-adjusted) | Backward-adjusted close; base series for all technical indicators |
 | ma5 | MA5 | N-day simple moving average of the backward-adjusted close |
 | ma10 | MA10 | N-day simple moving average of the backward-adjusted close |
@@ -141,20 +144,13 @@ div_yield, pb_mrq, ever_zt_count, year_zt_days
 | ps_ttm | PS (TTM) | total_mv / revenue_ttm |
 | dividend_rate | Dividend yield | Trailing 12-month cumulative DPS / close |
 
-> ⚠️ **Naming mismatch with the data.** Upstream calls the labels `return_1d` … `return_60d`;
-> **the actual columns are `future_return_1d` … `future_return_60d`**. Upstream also writes `Symbol`,
-> while the file uses lowercase `symbol`. These six columns are **labels, not features**.
-> 37 further columns present in the data are not documented upstream.
-
-> ⚠️ **Spec vs data (data wins).**
-> - The spec names the labels `return_1d`…`return_60d`; **the actual columns are `future_return_1d`…`future_return_60d`**.
-> - The spec writes `Symbol`; the file uses lowercase `symbol`.
-> - The spec covers 48 fields; the table has 78. The **37 undocumented** ones are mostly instrument
->   attributes (`industry_code/name`, `region_area_code/name`, `main_business`, `list_date`, `is_st`,
->   `is_hsgt`, `is_margin`, `in_hs300`, `is_kcb_creatable`, `is_quit_risk`, `is_hk`) and TDX-style derived
->   columns (`zt_price`, `dt_price`, `seal_strength`, `hs_turnover`, `zaf`, `beta_now`, `dyna_pe`,
->   `static_pe_ttm`, `div_yield`, `pb_mrq`, `ever_zt_count`, `year_zt_days`, `total_cap_yi`,
->   `float_mv_yi`, `free_float_shares`, `ipo_price`).
+> ⚠️ **78 shipped columns (measured).** The key columns are lowercase `symbol` + `time`; the forward-return
+> labels are `future_return_1d`…`future_return_60d`. Beyond the quote, technical and valuation columns,
+> 30 more carry instrument attributes and TDX-style derived values: `industry_code`/`industry_name`/
+> `sector_code`/`region_area_code`/`region_area_name`/`main_business`/`list_date`/`is_st`/`is_hk`/`is_hsgt`/
+> `is_margin`/`in_hs300`/`is_kcb_creatable`/`is_quit_risk`, plus `zt_price`/`dt_price`/`seal_strength`/
+> `hs_turnover`/`zaf`/`beta_now`/`dyna_pe`/`static_pe_ttm`/`div_yield`/`pb_mrq`/`ever_zt_count`/
+> `year_zt_days`/`total_cap_yi`/`float_mv_yi`/`free_float_shares`/`ipo_price`.
 
 > **⚠️ `future_return_*` are labels, not features.** Six forward-return columns share the table with the
 > features; auto-generating a feature list as "everything but the key" leaks the target.

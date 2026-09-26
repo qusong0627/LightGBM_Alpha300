@@ -37,7 +37,7 @@ modelscope download --repo-type dataset qusong0627/LightGBM_Alpha300 \
 | `bondRating` / `stockRating` | 债项评级 / 主体评级 |
 | `stockPrice` / `bondPrice` / `bondPremium` | 正股价 / 转股价 / 溢价 |
 
-官方口径摘录：
+口径摘录：
 
 <!-- bond: 11 行 -->
 | 字段名称 | 数据类型 | 指标说明 |

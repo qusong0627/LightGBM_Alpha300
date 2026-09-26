@@ -39,7 +39,7 @@ modelscope download --repo-type dataset qusong0627/LightGBM_Alpha300 \
 | `bondRating` / `stockRating` | issue rating / issuer rating |
 | `stockPrice` / `bondPrice` / `bondPremium` | underlying price / bond price / premium |
 
-Upstream definitions, translated:
+Field definitions, translated:
 
 <!-- bond_en: 11 行 | 译自 quantdb.cn §5 ETF / 可转债 -->
 | Field | Type | Description |

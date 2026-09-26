@@ -51,7 +51,7 @@
 
 ## 字段说明
 
-资产负债表、利润表与每股指标的官方口径（摘自 <https://www.quantdb.cn/docs/fields.html>）：
+资产负债表、利润表与每股指标的口径说明（摘自 <https://www.quantdb.cn/docs/fields.html>）：
 
 <!-- financial: 30 行 -->
 | 字段名称 | 数据类型 | 会计科目说明 |
@@ -90,7 +90,7 @@
 其余各表的实际列名可直接从样本读出，例如 `income` 前几列为
 `m_timetag, m_anntime, revenue, operating_revenue, total_operating_cost, cost_of_goods_sold, ...`；
 `pershare_index` 用的是 `s_fa_*` 前缀的通达信风格原生字段名（`s_fa_ocfps`、`s_fa_bps`、`s_fa_eps_basic`、`s_fa_eps_diluted` …），
-**这类字段名官网基本没有逐一解释，是使用时最大的口径盲区。**
+**这类字段没有逐项口径说明，是使用时最大的盲区。**
 
 ### `dividend_factors`（7 列）
 

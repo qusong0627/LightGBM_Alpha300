@@ -85,8 +85,8 @@ path = snapshot_download(
 | `1_kline_data/daily_forward` | 0.13 MB | ~32 MB | 2608 | 20260924 |
 | `1_kline_data/daily_backward` | 0.22 MB | ~54 MB | 2608 | 20260924 |
 | `5_technical_derived/technical_indicators` | 1.12 MB | ~273 MB | 2608 | 20260924 |
-| `5_technical_derived/valuation` | 0.45 MB | ~110 MB | **2604** | **20260918** |
-| `5_technical_derived/market_sentiment` | 0.52 MB | ~127 MB | **2604** | **20260918** |
+| `5_technical_derived/valuation` | 0.46 MB | ~112 MB | 2608 | 20260924 |
+| `5_technical_derived/market_sentiment` | 0.52 MB | ~127 MB | 2608 | 20260924 |
 | `6_ml_datasets/features_daily` | 1.74 MB | ~0.42 GB | 2608 | 20260924 |
 | `6_ml_datasets/l1_factors` | 3.69 MB | ~0.90 GB | 2608 | 20260924 |
 | `6_ml_datasets/l2_factors` | 9.92 MB | ~2.42 GB | 2120 | 20260924 |
@@ -94,7 +94,7 @@ path = snapshot_download(
 | `preview/*` | — | 合计 3.1 MB | — | — |
 | **全仓库** | — | **~56 GB** | 2608 交易日 | 20260924 |
 
-单日截面约 5200 只标的；`l1_l2_factors` 在 2026-09-24 为 5196 行 × 329 列 ≈ 14 MB。
+单日截面行数分两个口径（2026-09-24 实测）：日线与衍生指标表 **5570 行**，含 347 只北交所 `.BJ`；因子表不含 `.BJ`——`features_daily` 5223 行、`l1_factors` 5208 行、`l2_factors` 5210 行、`l1_l2_factors` 5196 行（14 MB × 329 列）。跨口径按 `symbol` 内连接时，北交所标的必然被丢弃。
 
 ## 全局约定
 
@@ -164,35 +164,22 @@ df = duckdb.sql("""
 
 ## 已知数据状况
 
-以下均为在真实分区上**实测**得到、官网字段文档未覆盖的信息：
+以下均为在真实分区上**实测**得到、建模前必须知道的信息：
 
 1. **两个因子已断更**：`ind_netflow_rank_20` 与 `concept_flow_rank` 在 2026-09-24 全表 100% 为空（退化为常数列），但 2026-06-01 仍正常——上游行业/概念资金流在某个时点停止供给。**建议按「列空值率阈值」动态剔除，不要写死列名。**
-2. **`valuation` 与 `market_sentiment` 滞后**：这两张表只同步到 `dt=20260918`（2604 分区），其余表到 `20260924`（2608 分区）。按「所有表都有最新日」写死日期会读到空结果。
-3. **`features_daily` 的标签列名与官网文档不一致**：官网 `fields.html` 记作 `return_1d` ~ `return_60d`，**实际数据列名是 `future_return_1d` ~ `future_return_60d`**。
-4. **命名大小写不一致**：官网文档部分表写 `Symbol` / `trade_date`，实际数据统一是 `symbol` / `time`（日线、估值、情绪、技术指标表）与 `date`（因子表）。
+2. **两套标的范围（universe）**：日线与 `5_technical_derived/` 三张表单日 5570 行，含 **347 只北交所（`.BJ`）**；`6_ml_datasets/` 的因子表一律不含 `.BJ`（5196~5223 行）。`margin_trading` 同样含 `.BJ`（2026-09-23 实测 341 只）。做全市场截面时先确定要用哪一套范围，跨范围拼接会得到不等长的两组行。
+3. **主键列名分两种**：所有表一律小写 `symbol`；日期列在日线、`5_technical_derived/`、`features_daily` 里是 `time`，在 `l1_factors` / `l2_factors` / `l1_l2_factors` 里是 `date`（`l1_factors` 两者都有）。二者都是 `datetime64` 真日期，`YYYYMMDD` 字符串只出现在基础表与财务表的 `TradingDate` / `m_timetag` / `m_anntime`。
+4. **未来收益标签一律带 `future_` 前缀**：`future_return_1d` ~ `future_return_60d`，同时存在于 `features_daily` 与 `technical_indicators`。
 5. **L2 仅 2018 年起**（合并宽表同理，2120 个交易日）：训练窗口跨 2018 年时注意样本结构突变。
 6. **高缺失 L2 因子**：`micro_jump_skew` 约 54% 缺失、`micro_jump_recovery_time` 约 48%、`micro_price_impact_large` 约 24%；其余 `micro_*`/`flow_*` 列中位缺失率接近 0。
 7. **估值因子有极端值**：`fun_pe` 实测单日跨度 -1206 ~ +1069（含负 PE 与极小分母）。LightGBM 按秩分裂受影响较小，做中性化或线性模型时务必 winsorize / 分位数化。
 8. **⚠️ 特征与标签分离**：`future_return_*` 是未来 N 日收益，属于 ML **标签**，不是特征。把它们留在 `feature_name` 里就是直接标签泄漏。
 
-## 官网字段文档覆盖情况
+## 口径原则：以数据实测为准
 
-字段口径以 <https://www.quantdb.cn/docs/fields.html> 为准，本仓库各目录 README 的字段表即摘录自该页。经与实际 Parquet 列逐一核对：
-
-| 数据集 | 官网记录字段数 | 实际列数 | 覆盖情况 |
-|---|---:|---:|---|
-| `l1_factors` | 110 | 119 | **110 个因子全部对得上**，未记录的 9 列是 `symbol/date/time` + OHLCV 主键 |
-| `l2_factors` | 211 | 219 | **211 个因子全部对得上**，未记录的 8 列同上 |
-| `features_daily` | 48 | 78 | 命名有出入（`return_*` vs `future_return_*`），另有 37 列未记录（行业/地区/主营/涨跌停/动态估值等属性列） |
-| `technical_indicators` | 15 | 35 | 文档用合并行（如 `ma5 / ma10 / ma20 / ma60`），20 列未单列；**且 `close` 被标成「前复权」，实测是后复权** |
-| `valuation` | 7 | 16 | 9 列未记录 |
-| `margin_trading` | — | 10 | 官网列了数据中不存在的 `slo_sell_amount`，实际有的 `finance_repay`/`slo_repay`/`slo_sell_volume` 未记 |
-| `market_sentiment` | **0** | 17 | **官网完全没有这一节**，各合成指标无官方口径可查 |
-| K 线 | 10 | 8 | 文档含 `trade_date`/`IndexCode` 等命名，实际为 `time`/`symbol` |
-
-> **本项目文档的口径原则：以数据实测为准。** 官网 `quantdb.cn/docs/fields.html` 与魔搭 README
-> 只要和真实 Parquet 冲突，一律按数据写，并在对应位置标注上游的错误（见各目录 README 的警告块），
-> 而不是照抄文档。上面的复权口径判定就是用 300 只标的逐一比对三套日线得出的。
+各目录 README 的字段表摘自 <https://www.quantdb.cn/docs/fields.html>，写入前已与实际 Parquet 逐列核对：
+列名、列数、口径一律以读到的数据为准。例如 `technical_indicators.close` 的复权口径，
+就是用 300 只标的逐一比对三套日线确定的（见 [`5_technical_derived/`](5_technical_derived/README.md)）。
 
 ## 许可与引用
 

@@ -89,8 +89,8 @@ Measured on each table's own latest partition; a year assumes ~244 trading days:
 | `1_kline_data/daily_forward` | 0.13 MB | ~32 MB | 2608 | 20260924 |
 | `1_kline_data/daily_backward` | 0.22 MB | ~54 MB | 2608 | 20260924 |
 | `5_technical_derived/technical_indicators` | 1.12 MB | ~273 MB | 2608 | 20260924 |
-| `5_technical_derived/valuation` | 0.45 MB | ~110 MB | **2604** | **20260918** |
-| `5_technical_derived/market_sentiment` | 0.52 MB | ~127 MB | **2604** | **20260918** |
+| `5_technical_derived/valuation` | 0.46 MB | ~112 MB | 2608 | 20260924 |
+| `5_technical_derived/market_sentiment` | 0.52 MB | ~127 MB | 2608 | 20260924 |
 | `6_ml_datasets/features_daily` | 1.74 MB | ~0.42 GB | 2608 | 20260924 |
 | `6_ml_datasets/l1_factors` | 3.69 MB | ~0.90 GB | 2608 | 20260924 |
 | `6_ml_datasets/l2_factors` | 9.92 MB | ~2.42 GB | 2120 | 20260924 |
@@ -98,7 +98,7 @@ Measured on each table's own latest partition; a year assumes ~244 trading days:
 | `preview/*` | — | 3.1 MB total | — | — |
 | **Whole dataset** | — | **~56 GB** | 2608 trading days | 20260924 |
 
-A daily cross-section is ~5,200 symbols; `l1_l2_factors` on 2026-09-24 is 5,196 rows × 329 columns ≈ 14 MB.
+Daily cross-sections come in two universes (measured 2026-09-24): the daily bars and all three tables under `5_technical_derived/` have **5,570 rows**, including 347 Beijing Stock Exchange (`.BJ`) symbols; the factor tables have **no `.BJ`** — `features_daily` 5,223, `l1_factors` 5,208, `l2_factors` 5,210, `l1_l2_factors` 5,196 rows (14 MB × 329 columns). Joining across the two universes on `symbol` always drops the BSE rows.
 
 ## Global conventions
 
@@ -178,12 +178,16 @@ All of the following were **measured** on real partitions:
    2026-09-24 (degenerate to a constant), yet were healthy on 2026-06-01 — the upstream industry/concept
    money-flow source stopped feeding at some point. **Drop columns by null-rate threshold at runtime;
    do not hard-code a column list.**
-2. **`valuation` and `market_sentiment` lag by four trading days** (through `dt=20260918`, 2604 partitions,
-   versus 2608 / 20260924 elsewhere). Scripts that assume every table has the latest date read empty frames.
-3. **`features_daily` label names differ from the spec**: quantdb.cn writes `return_1d`…`return_60d`,
-   **the actual columns are `future_return_1d`…`future_return_60d`**.
-4. **Case/naming inconsistency**: the spec uses `Symbol` / `trade_date` in places; the data uses
-   `symbol` / `time` (daily, valuation, sentiment, technical) and `date` (factor tables).
+2. **Two symbol universes.** The daily bars and the three `5_technical_derived/` tables carry 5,570 rows per
+   day, including **347 Beijing Stock Exchange (`.BJ`)** symbols; every table under `6_ml_datasets/` excludes
+   `.BJ` (5,196–5,223 rows). `margin_trading` does include BSE (341 symbols on 2026-09-23). Decide which
+   universe a cross-section needs before joining — the two row sets are not the same length.
+3. **Two key-column spellings.** Every table uses lowercase `symbol`. The date column is `time` in the
+   daily bars, `5_technical_derived/` and `features_daily`, and `date` in `l1_factors` / `l2_factors` /
+   `l1_l2_factors` (`l1_factors` carries both). Both are real `datetime64`; `YYYYMMDD` strings appear only
+   as `TradingDate` / `m_timetag` / `m_anntime` in the base and financial tables.
+4. **Forward-return labels are prefixed**: `future_return_1d`…`future_return_60d`, present in both
+   `features_daily` and `technical_indicators`.
 5. **L2 starts in 2018 only** (same for the merged table, 2120 trading days) — beware of structural breaks
    across that boundary.
 6. **High-null L2 factors**: `micro_jump_skew` ~54%, `micro_jump_recovery_time` ~48%,
@@ -195,21 +199,11 @@ All of the following were **measured** on real partitions:
 
 ## Documentation principle: the data wins
 
-Field semantics come from <https://www.quantdb.cn/docs/fields.html>, and the tables in each directory README
-are excerpts of it, translated. Wherever that page (or the ModelScope README) contradicts the actual Parquet
-files, **this documentation follows the measurements and flags the upstream error** rather than copying it.
-Coverage, audited column by column:
-
-| Dataset | Documented | Actual | Status |
-|---|---:|---:|---|
-| `l1_factors` | 110 | 119 | **all 110 factors match**; the other 9 columns are `symbol/date/time` + OHLCV keys |
-| `l2_factors` | 211 | 219 | **all 211 factors match**; the other 8 are the same keys |
-| `features_daily` | 48 | 78 | naming differs (`return_*` vs `future_return_*`); 37 undocumented attribute columns |
-| `technical_indicators` | 15 | 35 | spec uses merged rows (`ma5 / ma10 / ma20 / ma60`); **and labels `close` as forward-adjusted — measured backward** |
-| `valuation` | 7 | 16 | 9 columns undocumented |
-| `margin_trading` | — | 10 | spec lists `slo_sell_amount`, which does not exist; omits `finance_repay`/`slo_repay`/`slo_sell_volume`, which do |
-| `market_sentiment` | **0** | 17 | **the spec has no section at all** |
-| K-line | 10 | 8 | spec says `trade_date`/`IndexCode`; the data has `time`/`symbol` |
+The field tables in each directory README are translated excerpts of
+<https://www.quantdb.cn/docs/fields.html>, audited column by column against the real Parquet files:
+column names, counts and semantics are always written as the data has them. The adjustment basis of
+`technical_indicators.close`, for instance, was settled by matching 300 stocks against all three daily
+series (see [`5_technical_derived/`](5_technical_derived/README.en.md)).
 
 ## Licence and citation
 

@@ -82,7 +82,7 @@ Every table except `dividend_factors` starts with:
 | net_profit_excl_min_int_inc | float | Net profit attributable to owners of the parent |
 | s_fa_eps_basic | float | Basic earnings per share (EPS) |
 | s_fa_bps | float | Book value per share (BPS) |
-| s_fa_eps_basic | float | Basic earnings per share (EPS) — duplicated upstream |
+| s_fa_eps_basic | float | Basic earnings per share (EPS) |
 | du_return_on_equity | float | Return on equity, diluted (ROE) |
 | du_profit_rate | float | Net profit margin on sales |
 | inc_revenue_rate | float | YoY revenue growth (%) |
@@ -94,8 +94,8 @@ Every table except `dividend_factors` starts with:
 The remaining columns follow native TDX/Wind-style naming. For example `income` begins
 `m_timetag, m_anntime, revenue, operating_revenue, total_operating_cost, cost_of_goods_sold, …`,
 while `pershare_index` uses `s_fa_*` prefixed names (`s_fa_ocfps`, `s_fa_bps`, `s_fa_eps_basic`,
-`s_fa_eps_diluted`, …). **Most of these have no per-field upstream definition — the biggest semantic gap in
-the dataset.** Read the actual column list with `pd.read_parquet(...).columns`.
+`s_fa_eps_diluted`, …). **These TDX/Wind-style codes carry no per-field explanation — the biggest semantic
+gap in the dataset.** Read the actual column list with `pd.read_parquet(...).columns`.
 
 ### `dividend_factors` (7 columns)
 

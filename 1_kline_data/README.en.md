@@ -24,8 +24,8 @@ Layout: [中文](README.md) · [back to top](../README.en.md)
 | `daily_backward` | 2608 | 2016-01-04 | 0.22 MB | 20260924 | 8 |
 | `index_daily` | 2608 | 2016-01-04 | <0.01 MB | 20260924 | 9 |
 
-Each daily cross-section is ~5,200 rows. The whole quote directory for one year is ~115 MB —
-by far the cheapest place to start.
+Each daily cross-section is **5,570 rows** (measured 2026-09-24, including 347 Beijing Stock Exchange `.BJ`
+symbols). The whole quote directory for one year is ~115 MB — by far the cheapest place to start.
 
 ## Download
 
@@ -58,8 +58,8 @@ modelscope download --repo-type dataset qusong0627/LightGBM_Alpha300 \
 | IndexCode | string | Index code (e.g. 000300.SH) |  |
 | Category | string | Index category (broad-based / style / industry / theme) |  |
 
-> Upstream naming differs from the shipped files: the spec says `trade_date` / `IndexCode`,
-> **the Parquet actually uses `time` and `symbol`, and `index_daily` has no `IndexCode` column**.
+> Excerpted from the [field spec](https://www.quantdb.cn/docs/fields.html); the shipped files use
+> lowercase `symbol` / `time` throughout, as measured below.
 
 Actual columns as shipped (measured):
 
@@ -69,8 +69,8 @@ symbol, time, open, high, low, close, volume, amount
 
 `index_daily` adds one more column, `Category` (broad-based / style / industry / theme).
 
-> **Naming and scope gaps vs the spec (data wins):** the spec writes `trade_date` where the files use `time`,
-> and lists an `IndexCode` column that `index_daily` does not have.
+> All three daily tables ship `symbol, time, open, high, low, close, volume, amount`;
+> `index_daily` has those 8 plus `Category`.
 
 ## Units
 

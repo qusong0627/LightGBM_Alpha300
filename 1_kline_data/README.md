@@ -21,7 +21,7 @@ K 线数据根目录。**按交易日分区**，每个分区一个 `data.parquet
 | `daily_backward` | 2608 | 2016-01-04 起 | 0.22 MB | 20260924 | 8 |
 | `index_daily` | 2608 | 2016-01-04 起 | <0.01 MB | 20260924 | 9 |
 
-三套日线单日均约 5200 行。日线全套（三套复权 + 指数）一年约 115 MB，是最值得优先下载的部分。
+三套日线单日均 **5570 行**（2026-09-24 实测，含 347 只北交所 `.BJ`）。日线全套（三套复权 + 指数）一年约 115 MB，是最值得优先下载的部分。
 
 ## 下载
 
@@ -54,8 +54,8 @@ modelscope download --repo-type dataset qusong0627/LightGBM_Alpha300 \
 | IndexCode | string | 指数代码（如 000300.SH） |  |
 | Category | string | 指数类别（宽基/风格/行业/主题） |  |
 
-> 上表摘自[官网字段规范](https://www.quantdb.cn/docs/fields.html)。注意两点差异：
-> 官网 K 线表用 `trade_date` 命名，**实际数据列名是 `time`**；官网 `Symbol` 在实际数据里是小写 `symbol`。
+> 上表摘自[字段规范](https://www.quantdb.cn/docs/fields.html)。实际 Parquet 一律是小写 `symbol` / `time`，
+> 列名与列数以下方实测清单为准。
 
 实际列清单（`daily_*`，实测）：
 

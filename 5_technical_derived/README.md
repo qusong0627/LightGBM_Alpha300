@@ -5,20 +5,23 @@
 ```
 5_technical_derived/
 ├── technical_indicators/dt=YYYYMMDD/data.parquet   # 35 列，1.12 MB/日
-├── valuation/dt=YYYYMMDD/data.parquet              # 16 列，0.45 MB/日
+├── valuation/dt=YYYYMMDD/data.parquet              # 16 列，0.46 MB/日
 └── market_sentiment/dt=YYYYMMDD/data.parquet       # 17 列，0.52 MB/日
 ```
 
-## 实测体积与**同步进度不一致**
+## 实测体积与单日截面
 
 | 子目录 | 列数 | 分区数 | 最新分区 | 单日 | 一年（估） |
 |---|---:|---:|---|---:|---:|
-| `technical_indicators` | 35 | 2608 | **20260924** | 1.12 MB | ~273 MB |
-| `valuation` | 16 | **2604** | **20260918** | 0.45 MB | ~110 MB |
-| `market_sentiment` | 17 | **2604** | **20260918** | 0.52 MB | ~127 MB |
+| `technical_indicators` | 35 | 2608 | 20260924 | 1.12 MB | ~273 MB |
+| `valuation` | 16 | 2608 | 20260924 | 0.46 MB | ~112 MB |
+| `market_sentiment` | 17 | 2608 | 20260924 | 0.52 MB | ~127 MB |
 
-> ⚠️ **`valuation` 与 `market_sentiment` 比日线和其他表落后 4 个交易日**（2604 vs 2608 分区）。
-> 写死「取最新交易日」的一次性脚本，对这两张表会读到空结果——请各自取自己存在的最新分区。
+三张表分区进度一致，都跟日线齐平（2608 个分区，最新 `dt=20260924`）。
+
+> ⚠️ **这三张表的单日截面是 5570 行，含 347 只北交所（`.BJ`）标的**，和日线表一致；
+> 但 `6_ml_datasets/` 下的因子表（`l1_factors` 5208 行、`l1_l2_factors` 5196 行）**不含 `.BJ`**。
+> 用 `symbol` 把估值/情绪/技术指标与因子表拼接时，北交所那部分标的必然落空——按因子表为主表做内连接即可。
 
 ## 下载
 
@@ -39,11 +42,10 @@ modelscope download --repo-type dataset qusong0627/LightGBM_Alpha300 \
 
 三张表首列都是 `symbol, time, close`，但两个 `close` 不是同一口径——横向拼接时不要拿它们互相校验。
 
-> ⚠️ **官网 `fields.html` 把本表 `close` 标为「前复权」，这是错的。**
+> ⚠️ **本表 `close` 是后复权口径。**
 > 实测方法：取 2026-09-24 的 300 只标的，把 `technical_indicators.close` 分别与三套日线的 `close` 比对——
 > 与 **`daily_backward` 300/300 完全相等，平均相对偏差 0.000**；与 `daily_unadjusted` 仅 37/300 相等
 > （即无除权历史的标的），与 `daily_forward` 同样只有部分相等。
-> 结论：**本表为后复权**，与魔搭 README 一致、与 quantdb.cn 字段页矛盾。**一律以数据实测为准。**
 > 参考例：`000001.SZ` 当日不复权/前复权 11.30，后复权 18.647061，本表 `close` = 18.647061。
 
 ## 1. `technical_indicators`（35 列，实测列名）
@@ -70,12 +72,12 @@ pct_change, beta_20
 | 收益 | `pct_change`、`beta_20` | 当日涨跌幅、20 日 beta |
 | **标签** | `future_return_1d ~ 60d` | **未来 N 日收益，是 ML 标签，不是特征** |
 
-官方口径摘录：
+口径摘录：
 
 <!-- technical: 7 行 -->
 | 字段名称 | 数据类型 | 计算口径与指标说明 |
 |---|---|---|
-| close | float | 收盘价（前复权） |
+| close | float | 收盘价（后复权，实测） |
 | ma5 / ma10 / ma20 / ma60 | float | 5/10/20/60 日简单移动平均线 |
 | rsi_6 / rsi_14 | float | 相对强弱指标 RSI（主流 SMA 平滑口径） |
 | kdj_k / kdj_d / kdj_j | float | 随机指标 KDJ（SMA(RSV,3,1)） |
@@ -101,7 +103,7 @@ pe_ttm, pe_static, pb, ps_ttm, dividend_rate
 | `net_profit_ttm` / `revenue_ttm` / `equity` / `annual_net_profit` | 元 | TTM 净利润 / 营收 / 净资产 / 年报净利润 |
 | `pe_ttm` / `pe_static` / `pb` / `ps_ttm` / `dividend_rate` | 倍 / % | 估值比率 |
 
-官方口径摘录：
+口径摘录：
 
 <!-- valuation: 6 行 -->
 | 字段名称 | 数据类型 | 计算公式与说明 |
@@ -134,8 +136,8 @@ buy_pressure, sell_pressure, momentum_1d, momentum_3d, am_pm_trend, volume_conce
 | `momentum_1d` / `momentum_3d` / `am_pm_trend` | 短期动量、上下午趋势 |
 | `volume_concentration` | 成交集中度 |
 
-> **官网 `fields.html` 没有 `market_sentiment` 这一段**，上表列名与含义是从实际 Parquet 列名推断的，
-> `liquidity_score`、`buy_pressure`、`sell_pressure` 这类合成指标的具体公式目前**无官方口径可查**，用前建议自行反推验证。
+> 上表列名取自实际 Parquet，含义按列名推断；`liquidity_score`、`buy_pressure`、`sell_pressure`
+> 这类合成指标**没有公开公式可查**，用前建议自行反推验证。
 
 ## 读取
 
@@ -143,7 +145,7 @@ buy_pressure, sell_pressure, momentum_1d, momentum_3d, am_pm_trend, volume_conce
 import pandas as pd
 
 tech = pd.read_parquet("quantdb/5_technical_derived/technical_indicators/dt=20260924/data.parquet")
-val  = pd.read_parquet("quantdb/5_technical_derived/valuation/dt=20260918/data.parquet")   # 注意：落后 4 天
+val  = pd.read_parquet("quantdb/5_technical_derived/valuation/dt=20260924/data.parquet")
 
 feat = tech.drop(columns=[c for c in tech.columns if c.startswith("future_return_")])
 label = tech[["symbol", "time", "future_return_5d"]]
